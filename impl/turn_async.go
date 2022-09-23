@@ -39,7 +39,7 @@ func NewTurnAsync(groupType GroupType, deadline time.Duration, finish interf.Fin
 
 func (this *TurnAsync) AddAction(action *Action) {
 
-	//防止运行之后再添加action，避免在group中对 actionlist 加锁
+	//note: 防止运行之后再添加action，避免在group中对 actionlist 加锁
 	running := atomic.LoadInt32(&this.running)
 	if running == 1 {
 		fmt.Println("运行之后，不能再添加action.")
