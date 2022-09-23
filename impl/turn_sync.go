@@ -18,22 +18,28 @@ import (
 //    即不要timer和Run协程，仅仅将 group.ready 和 group.exec 封装起来，供业务层调用
 
 type TurnSync struct {
-	group  *Group
-	finish interf.Finish
+	group   *Group
+	finish  interf.Finish
+	running bool
 }
 
 func NewTurnSync(groupType GroupType, finish interf.Finish) *TurnSync {
 	return &TurnSync{
-		group:  NewGroup(groupType),
-		finish: finish,
+		group:   NewGroup(groupType),
+		finish:  finish,
+		running: true,
 	}
 }
 
-func (this *TurnSync) AddAction(action Action) {
+func (this *TurnSync) AddAction(action *Action) {
 	this.group.addAction(action)
 }
 
 func (this *TurnSync) Run(force bool) {
+	if !this.running {
+		fmt.Println("未运行")
+		return
+	}
 
 	if this.group.empty() {
 		fmt.Println("没有action，退出")
@@ -48,8 +54,11 @@ func (this *TurnSync) Run(force bool) {
 	}
 
 	if !force && !ready {
+		fmt.Printf("not ready, force: %v, ready: %v\n", force, ready)
 		return
 	}
+
+	fmt.Println("ready ok or force.")
 
 	this.group.exec()
 
@@ -61,6 +70,7 @@ func (this *TurnSync) Run(force bool) {
 }
 
 func (this *TurnSync) clean() {
+	this.running = false
 	this.group = nil
 	this.finish = nil
 }

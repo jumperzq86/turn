@@ -37,7 +37,7 @@ func NewTurnAsync(groupType GroupType, deadline time.Duration, finish interf.Fin
 	}
 }
 
-func (this *TurnAsync) AddAction(action Action) {
+func (this *TurnAsync) AddAction(action *Action) {
 	this.group.addAction(action)
 }
 

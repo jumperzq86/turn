@@ -1,12 +1,13 @@
 package impl
 
 import (
+	"fmt"
 	"github.com/jumperzq86/turn/interf"
 	"math"
 	"sort"
 )
 
-type ActionList []Action
+type ActionList []*Action
 
 func (this ActionList) Len() int {
 	return len(this)
@@ -54,11 +55,11 @@ type Group struct {
 func NewGroup(groupType GroupType) *Group {
 	return &Group{
 		groupType:  groupType,
-		actionList: make([]Action, 0),
+		actionList: make([]*Action, 0),
 	}
 }
 
-func (this *Group) addAction(action Action) {
+func (this *Group) addAction(action *Action) {
 	this.actionList = append(this.actionList, action)
 }
 
@@ -128,9 +129,12 @@ func (this *Group) exec() error {
 }
 
 func (this *Group) execAllAction() error {
-	var err error
 	for _, action := range this.actionList {
-		if err = action.Exec(); err != nil {
+		ternary, err := action.Check()
+		if err != nil {
+			return err
+		}
+		if err = action.Exec(ternary); err != nil {
 			return err
 		}
 		action.Clean()
@@ -145,7 +149,7 @@ func (this *Group) execActiveAction() error {
 			return err
 		}
 		if ternary == interf.TernaryActive {
-			if err = action.Exec(); err != nil {
+			if err = action.Exec(ternary); err != nil {
 				return err
 			}
 		}
@@ -171,12 +175,13 @@ func (this *Group) execPriorActiveAction() error {
 	//执行最高优先级active action，可能不止一个
 	for _, action := range this.actionList {
 		if action.priority == highestActiveLevel {
+			fmt.Printf("---------- priority: %d, highestActiveLevel: %d\n", action.priority, highestActiveLevel)
 			ternary, err := action.Check()
 			if err != nil {
 				return err
 			}
 			if ternary == interf.TernaryActive {
-				action.Exec()
+				action.Exec(ternary)
 			}
 		}
 		action.Clean()

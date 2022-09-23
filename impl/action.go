@@ -25,11 +25,8 @@ func NewAction(priority int, condition interf.Condition, operation interf.Operat
 
 }
 
-func (this *Action) Exec() error {
-	c, err := this.Check()
-	if err != nil {
-		return err
-	}
+func (this *Action) Exec(c interf.TernaryValue) error {
+	var err error
 
 	switch c {
 	case interf.TernaryInit:

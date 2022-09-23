@@ -4,6 +4,7 @@ package interf
 type TernaryValue int
 
 const (
+	TernaryNone     TernaryValue = -1
 	TernaryInit     TernaryValue = 0
 	TernaryActive   TernaryValue = 1
 	TernaryDeactive TernaryValue = 2
