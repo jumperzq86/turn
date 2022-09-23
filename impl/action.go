@@ -1,13 +1,17 @@
-package turn
+package impl
+
+import (
+	"github.com/jumperzq86/turn/interf"
+)
 
 type Action struct {
 	priority int
-	Condition
-	Operation
-	Cleaner
+	interf.Condition
+	interf.Operation
+	interf.Cleaner
 }
 
-func NewAction(priority int, condition Condition, operation Operation, cleaner Cleaner) (*Action, error) {
+func NewAction(priority int, condition interf.Condition, operation interf.Operation, cleaner interf.Cleaner) (*Action, error) {
 	if condition == nil || operation == nil || cleaner == nil {
 		return nil, nil
 	}
@@ -28,18 +32,18 @@ func (this *Action) Exec() error {
 	}
 
 	switch c {
-	case TernaryInit:
+	case interf.TernaryInit:
 		err = this.OperateInit()
 		if err != nil {
 			return err
 		}
-	case TernaryActive:
+	case interf.TernaryActive:
 		err = this.OperateActive()
 		if err != nil {
 			return err
 		}
 
-	case TernaryDeactive:
+	case interf.TernaryDeactive:
 		err = this.OperateDeactive()
 		if err != nil {
 			return err

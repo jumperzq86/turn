@@ -1,6 +1,7 @@
-package turn
+package impl
 
 import (
+	"github.com/jumperzq86/turn/interf"
 	"math"
 	"sort"
 )
@@ -50,12 +51,23 @@ type Group struct {
 	actionList ActionList
 }
 
-func (this *Group) AddAction(action Action) {
+func NewGroup(groupType GroupType) *Group {
+	return &Group{
+		groupType:  groupType,
+		actionList: make([]Action, 0),
+	}
+}
+
+func (this *Group) addAction(action Action) {
 	this.actionList = append(this.actionList, action)
 }
 
+func (this *Group) empty() bool {
+	return len(this.actionList) == 0
+}
+
 //判断当前（超时前）是否能够执行action，这里需要根据grouptype来判断
-func (this *Group) Ready() (bool, error) {
+func (this *Group) ready() (bool, error) {
 	//前两种方式中，没有人未决即可开始执行group
 	if this.groupType == AllAction || this.groupType == ActiveAction {
 		for _, action := range this.actionList {
@@ -63,7 +75,7 @@ func (this *Group) Ready() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			if ternary == TernaryInit {
+			if ternary == interf.TernaryInit {
 				return false, nil
 			}
 		}
@@ -89,7 +101,7 @@ func (this *Group) Ready() (bool, error) {
 	return false, nil
 }
 
-func (this *Group) Exec() error {
+func (this *Group) exec() error {
 	//排序
 	sort.Sort(this.actionList)
 	switch this.groupType {
@@ -115,8 +127,6 @@ func (this *Group) Exec() error {
 	return nil
 }
 
-////////////////////////////////////////////////////
-
 func (this *Group) execAllAction() error {
 	var err error
 	for _, action := range this.actionList {
@@ -134,7 +144,7 @@ func (this *Group) execActiveAction() error {
 		if err != nil {
 			return err
 		}
-		if ternary == TernaryActive {
+		if ternary == interf.TernaryActive {
 			if err = action.Exec(); err != nil {
 				return err
 			}
@@ -165,7 +175,7 @@ func (this *Group) execPriorActiveAction() error {
 			if err != nil {
 				return err
 			}
-			if ternary == TernaryActive {
+			if ternary == interf.TernaryActive {
 				action.Exec()
 			}
 		}
@@ -187,11 +197,11 @@ func (this *Group) findHighestLevelAction() (int, int, error) {
 			return highestInitLevel, highestActiveLevel, err
 		}
 
-		if highestInitLevel == math.MinInt && ternary == TernaryInit {
+		if highestInitLevel == math.MinInt && ternary == interf.TernaryInit {
 			highestInitLevel = action.priority
 		}
 
-		if highestActiveLevel == math.MinInt && ternary == TernaryActive {
+		if highestActiveLevel == math.MinInt && ternary == interf.TernaryActive {
 			highestActiveLevel = action.priority
 		}
 

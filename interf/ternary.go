@@ -1,4 +1,4 @@
-package turn
+package interf
 
 // 三元逻辑值
 type TernaryValue int
