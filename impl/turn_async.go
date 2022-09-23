@@ -38,6 +38,14 @@ func NewTurnAsync(groupType GroupType, deadline time.Duration, finish interf.Fin
 }
 
 func (this *TurnAsync) AddAction(action *Action) {
+
+	//防止运行之后再添加action，避免在group中对 actionlist 加锁
+	running := atomic.LoadInt32(&this.running)
+	if running == 1 {
+		fmt.Println("运行之后，不能再添加action.")
+		return
+	}
+
 	this.group.addAction(action)
 }
 
@@ -51,9 +59,16 @@ func (this *TurnAsync) Signal() {
 }
 
 func (this *TurnAsync) Run() {
+
 	ok := atomic.CompareAndSwapInt32(&this.running, 0, 1)
 	if !ok {
 		fmt.Println("不能重复运行")
+		return
+	}
+
+	if this.group.empty() {
+		fmt.Println("没有action，无法运行")
+		atomic.StoreInt32(&this.running, 0)
 		return
 	}
 
@@ -62,15 +77,11 @@ func (this *TurnAsync) Run() {
 		this.clean()
 	}()
 
-	if this.group.empty() {
-		fmt.Println("没有action，退出")
-		return
-	}
-
 end:
 	for {
 		select {
 		case <-this.timer.C:
+			fmt.Println("---超时")
 			this.group.exec()
 			break end
 
@@ -80,7 +91,7 @@ end:
 				fmt.Println("发生错误： ", err)
 				return
 			}
-
+			fmt.Println("ready: ", ready)
 			if ready {
 				this.group.exec()
 				break end

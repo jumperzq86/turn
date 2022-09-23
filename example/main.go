@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jumperzq86/turn/impl"
 	"github.com/jumperzq86/turn/interf"
+	"time"
 )
 
 var checktag1 = true
@@ -23,12 +24,12 @@ func main() {
 	var c2 ConditionS2
 	var o2 OperationS
 	var cl2 CleanerS
-	a2, err := impl.NewAction(2, &c2, &o2, &cl2)
+	a2, err := impl.NewAction(3, &c2, &o2, &cl2)
 	if err != nil {
 		fmt.Println("err: ", err)
 		return
 	}
-
+	//
 	var c3 ConditionS3
 	var o3 OperationS
 	var cl3 CleanerS
@@ -38,21 +39,35 @@ func main() {
 		return
 	}
 
+	//var f FinishS
+	//turnSync := impl.NewTurnSync(impl.PriorActiveAction, &f)
+	//turnSync.AddAction(a1)
+	//turnSync.AddAction(a2)
+	//turnSync.AddAction(a3)
+	//
+	//turnSync.Run(false)
+	//
+	//fmt.Println("--------------------")
+	//checktag1 = false
+	//checktag2 = false
+	//checktag3 = true
+	//
+	//turnSync.Run(true)
+
 	var f FinishS
-	turnSync := impl.NewTurnSync(impl.PriorActiveAction, &f)
-	turnSync.AddAction(a1)
-	turnSync.AddAction(a2)
-	turnSync.AddAction(a3)
-
-	turnSync.Run(false)
-
-	fmt.Println("--------------------")
-	checktag1 = false
+	//checktag1 = false
 	checktag2 = false
-	checktag3 = true
+	checktag3 = false
+	turnAsync := impl.NewTurnAsync(impl.PriorActiveAction, 3*time.Second, &f)
+	turnAsync.AddAction(a1)
+	turnAsync.AddAction(a2)
+	turnAsync.AddAction(a3)
 
-	turnSync.Run(true)
+	go turnAsync.Run()
+	time.Sleep(1 * time.Second)
+	turnAsync.Signal()
 
+	select {}
 }
 
 type ConditionS1 struct {
