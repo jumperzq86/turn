@@ -85,6 +85,11 @@
 
     * action 具有优先级，可以存在相同优先级的action
 
+      需要注意的是，action的优先级在不同的group中具有不同作用
+
+        * 执行顺序，比如group执行方式1/2
+        * 执行与否，比如group执行方式3
+
     * group 为action list，包含多个action，按照优先级降序排列
 
     * group 有多种执行方式
@@ -133,12 +138,12 @@
 
 
 
-* group + timeout + next = turn
+* group + timeout + finish = turn
 
     * turn 即每次需要等待决策出一个操作的时候 所需要建立的一个实体
     * timeout 即等待决策的超时时间，当到达 timeout 超时时间，就直接执行group
     * group 即所有执行逻辑，执行方式如上述多种可选
-    * next 是用于提供一个接口给业务层，让其进行流程检测和推动的，比如出牌组合操作中所有人过
+    * finish 是用于提供一个接口给业务层，让其进行流程检测和推动的，比如出牌组合操作中所有人过
 
 
 
@@ -210,3 +215,21 @@
 * operation_list_deactive 为空，过无需操作
 * operation_list_init 为空，未决无需操作
 * actions选择执行方式3
+
+
+
+## 同步
+
+实现上需要考虑同步方式
+
+1. 异步方式
+
+   把协程同步的工作交给业务层代码，本库中不用考虑协程同步操作
+
+   而是在业务代码中使用锁来进行协程同步操作（包括这里interf中对所有接口实现）
+
+2. 同步方式
+
+   本库中放弃超时逻辑和单独协程，仅仅提供一个轮次管理的逻辑
+
+   即不要timer和Run协程，仅仅将 group.ready 和 group.exec 封装起来，供业务层调用
