@@ -87,8 +87,8 @@
 
       需要注意的是，action的优先级在不同的group中具有不同作用
 
-        * 执行顺序，比如group执行方式1/2
-        * 执行与否，比如group执行方式3
+        * 比如在group执行方式1/2中，action的优先级决定执行顺序
+        * 比如在group执行方式3中，action的优先级决定执行与否
 
     * group 为action list，包含多个action，按照优先级降序排列
 
@@ -177,6 +177,20 @@
 
 
 
+比如三人对同一张出牌都能够胡，任意数量玩家能够执行操作
+
+* group 包含3个action，具有相同优先级
+* action中的condition由玩家胡（对应active），过（对应deactive），未操作（对应init）来决定
+* operation_list_active 为执行胡逻辑
+* operation_list_deactive 为空，过无需操作
+* operation_list_init 为空，未决无需操作
+* actions选择执行方式2或者方式3
+
+由于每个action都会执行clean函数，让每个玩家都能在operation中清理自己的turn数据，
+相比于一个turn一个clean，这种方式让clean能够更加灵活
+
+
+
 #### 等待所有人发送具有优先级差别的消息
 
 比如三人对同一张出牌分别能够吃碰胡，只有一个人能够执行操作
@@ -186,21 +200,7 @@
 * operation_list_active 为执行碰/吃逻辑
 * operation_list_deactive 为空，过无需操作
 * operation_list_init 为空，未决无需操作
-* actions选择执行方式4
-
-由于每个action都会执行clean函数，让每个玩家都能在operation中清理自己的turn数据，
-相比于一个turn一个clean，这种方式让clean能够更加灵活
-
-
-
-比如三人对同一张出牌都能够胡，任意数量玩家能够执行操作
-
-* group 包含3个action，具有相同优先级
-* action中的condition由玩家胡（对应active），过（对应deactive），未操作（对应init）来决定
-* operation_list_active 为执行胡逻辑
-* operation_list_deactive 为空，过无需操作
-* operation_list_init 为空，未决无需操作
-* actions选择执行方式2
+* actions选择执行方式3
 
 由于每个action都会执行clean函数，让每个玩家都能在operation中清理自己的turn数据，
 相比于一个turn一个clean，这种方式让clean能够更加灵活
