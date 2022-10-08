@@ -67,7 +67,7 @@ func main() {
 	time.Sleep(1 * time.Second)
 	turnAsync.Signal()
 
-	select {}
+	time.Sleep(5 * time.Second)
 }
 
 type ConditionS1 struct {

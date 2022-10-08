@@ -17,7 +17,7 @@ import (
 // 	  而是在业务代码中使用锁来进行协程同步操作（包括这里interf中对所有接口实现）
 //	2.同步方式：
 //    本库中放弃超时逻辑和单独协程，仅仅提供一个轮次管理的逻辑
-//    即不要timer和Run协程，仅仅将 group.ready 和 group.exec 封装起来，供业务层调用
+//    即不要timer和Run协程，直接在业务主协程中执行 AddAction/Run
 
 type TurnAsync struct {
 	group   *Group
@@ -27,49 +27,50 @@ type TurnAsync struct {
 	signal  chan struct{}
 }
 
-func NewTurnAsync(groupType GroupType, deadline time.Duration, finish interf.Finish) *TurnAsync {
+func NewTurnAsync(groupType GroupType, duration time.Duration, finish interf.Finish) *TurnAsync {
 	return &TurnAsync{
 		group:   NewGroup(groupType),
-		timer:   time.NewTimer(deadline),
+		timer:   time.NewTimer(duration),
 		finish:  finish,
 		running: 0,
 		signal:  make(chan struct{}, 1),
 	}
 }
 
-func (this *TurnAsync) AddAction(action *Action) {
+func (this *TurnAsync) AddAction(action *Action) error {
 
 	//note: 防止运行之后再添加action，避免在group中对 actionlist 加锁
 	running := atomic.LoadInt32(&this.running)
 	if running == 1 {
 		fmt.Println("运行之后，不能再添加action.")
-		return
+		return interf.ErrNotAllowedAddActionAfterRun
 	}
 
 	this.group.addAction(action)
+	return nil
 }
 
-func (this *TurnAsync) Signal() {
+func (this *TurnAsync) Signal() error {
 	if atomic.LoadInt32(&this.running) == 0 {
 		fmt.Println("还未启动turn")
-		return
+		return interf.ErrTurnNotRun
 	}
 	this.signal <- struct{}{}
-	return
+	return nil
 }
 
-func (this *TurnAsync) Run() {
+func (this *TurnAsync) Run() error {
 
 	ok := atomic.CompareAndSwapInt32(&this.running, 0, 1)
 	if !ok {
 		fmt.Println("不能重复运行")
-		return
+		return interf.ErrTurnAlreadyRun
 	}
 
 	if this.group.empty() {
 		fmt.Println("没有action，无法运行")
 		atomic.StoreInt32(&this.running, 0)
-		return
+		return interf.ErrNoExecutableAction
 	}
 
 	// 退出协程时清理turn
@@ -89,7 +90,7 @@ end:
 			ready, err := this.group.ready()
 			if err != nil {
 				fmt.Println("发生错误： ", err)
-				return
+				return interf.ErrGroupCheckReadyFailed
 			}
 			fmt.Println("ready: ", ready)
 			if ready {
@@ -101,7 +102,7 @@ end:
 
 	// 流程检测与推动
 	this.finish.FinishTurn()
-	return
+	return nil
 }
 
 func (this *TurnAsync) clean() {
