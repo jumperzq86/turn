@@ -55,15 +55,17 @@ func main() {
 	//turnSync.Run(false)
 
 	var f FinishS
-	//checktag1 = false
+	checktag1 = false
 	checktag2 = false
 	checktag3 = false
 	turnAsync := impl.NewTurnAsync(impl.PriorActiveAction, 3*time.Second, &f)
+
 	turnAsync.AddAction(a1)
 	turnAsync.AddAction(a2)
 	turnAsync.AddAction(a3)
 
 	go turnAsync.Run()
+
 	time.Sleep(1 * time.Second)
 	turnAsync.Signal()
 
