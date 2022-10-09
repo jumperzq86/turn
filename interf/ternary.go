@@ -10,6 +10,19 @@ const (
 	TernaryDeactive TernaryValue = 2
 )
 
+func (this TernaryValue) String() string {
+	switch this {
+	case 0:
+		return "TernaryInit"
+	case 1:
+		return "TernaryActive"
+	case 2:
+		return "TernaryDeactive"
+	default:
+		return "TernaryNone"
+	}
+}
+
 // 三元与
 func TernaryAnd(values ...TernaryValue) TernaryValue {
 	existInit := false

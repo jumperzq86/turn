@@ -2,9 +2,14 @@ package impl
 
 import (
 	"github.com/jumperzq86/turn/interf"
+	"math/rand"
+	"time"
 )
 
+var idRandom = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 type Action struct {
+	id       int64 // 无实质用途，主要用于日志和调试
 	priority int
 	interf.Condition
 	interf.Operation
@@ -17,6 +22,7 @@ func NewAction(priority int, condition interf.Condition, operation interf.Operat
 	}
 
 	return &Action{
+		id:        idRandom.Int63(),
 		priority:  priority,
 		Condition: condition,
 		Operation: operation,

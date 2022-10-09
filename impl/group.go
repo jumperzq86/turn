@@ -60,6 +60,7 @@ func NewGroup(groupType GroupType) *Group {
 }
 
 func (this *Group) addAction(action *Action) {
+	fmt.Printf("添加action %d，优先级: %d\n", action.id, action.priority)
 	this.actionList = append(this.actionList, action)
 }
 
@@ -72,6 +73,7 @@ func (this *Group) ready() (bool, error) {
 	//前两种方式中，没有人未决即可开始执行group
 	if this.groupType == AllAction || this.groupType == ActiveAction {
 		for _, action := range this.actionList {
+			fmt.Printf("action: %d, check\n", action.id)
 			ternary, err := action.Check()
 			if err != nil {
 				return false, err
@@ -129,36 +131,46 @@ func (this *Group) exec() error {
 }
 
 func (this *Group) execAllAction() error {
+	fmt.Printf("execAllAction\n")
+
 	for _, action := range this.actionList {
 		ternary, err := action.Check()
 		if err != nil {
 			return err
 		}
+		fmt.Printf("action: %d, exec: %s\n", action.id, ternary)
 		if err = action.Exec(ternary); err != nil {
 			return err
 		}
+		fmt.Printf("action: %d, clean\n", action.id)
 		action.Clean()
 	}
 	return nil
 }
 
 func (this *Group) execActiveAction() error {
+	fmt.Printf("execActiveAction\n")
+
 	for _, action := range this.actionList {
 		ternary, err := action.Check()
 		if err != nil {
 			return err
 		}
 		if ternary == interf.TernaryActive {
+			fmt.Printf("action: %d, exec: %s\n", action.id, ternary)
 			if err = action.Exec(ternary); err != nil {
 				return err
 			}
 		}
+		fmt.Printf("action: %d, clean\n", action.id)
 		action.Clean()
 	}
 	return nil
 }
 
 func (this *Group) execPriorActiveAction() error {
+	fmt.Printf("execPriorActiveAction\n")
+
 	_, highestActiveLevel, err := this.findHighestLevelAction()
 	if err != nil {
 		return err
@@ -172,18 +184,21 @@ func (this *Group) execPriorActiveAction() error {
 		return nil
 	}
 
+	fmt.Printf("highestActiveLevel: %d\n", highestActiveLevel)
+
 	//执行最高优先级active action，可能不止一个
 	for _, action := range this.actionList {
 		if action.priority == highestActiveLevel {
-			fmt.Printf("---------- priority: %d, highestActiveLevel: %d\n", action.priority, highestActiveLevel)
 			ternary, err := action.Check()
 			if err != nil {
 				return err
 			}
 			if ternary == interf.TernaryActive {
+				fmt.Printf("action: %d, exec: %s\n", action.id, ternary)
 				action.Exec(ternary)
 			}
 		}
+		fmt.Printf("action: %d, clean\n", action.id)
 		action.Clean()
 	}
 	return nil

@@ -32,7 +32,7 @@ func NewTurnAsync(groupType GroupType, duration time.Duration, finish interf.Fin
 		group:   NewGroup(groupType),
 		timer:   time.NewTimer(duration),
 		finish:  finish,
-		running: 0,
+		running: int32(interf.RunInit),
 		signal:  make(chan struct{}, 1),
 	}
 }
@@ -41,7 +41,7 @@ func (this *TurnAsync) AddAction(action *Action) error {
 
 	//note: 防止运行之后再添加action，避免在group中对 actionlist 加锁
 	running := atomic.LoadInt32(&this.running)
-	if running == 1 {
+	if running != int32(interf.RunInit) {
 		fmt.Println("运行之后，不能再添加action.")
 		return interf.ErrNotAllowedAddActionAfterRun
 	}
@@ -51,17 +51,20 @@ func (this *TurnAsync) AddAction(action *Action) error {
 }
 
 func (this *TurnAsync) Signal() error {
-	if atomic.LoadInt32(&this.running) == 0 {
+
+	running := atomic.LoadInt32(&this.running)
+	if running != int32(interf.Running) {
 		fmt.Println("还未启动turn")
 		return interf.ErrTurnNotRun
 	}
+
 	this.signal <- struct{}{}
 	return nil
 }
 
 func (this *TurnAsync) Run() error {
 
-	ok := atomic.CompareAndSwapInt32(&this.running, 0, 1)
+	ok := atomic.CompareAndSwapInt32(&this.running, int32(interf.RunInit), int32(interf.Running))
 	if !ok {
 		fmt.Println("不能重复运行")
 		return interf.ErrTurnAlreadyRun
@@ -69,7 +72,7 @@ func (this *TurnAsync) Run() error {
 
 	if this.group.empty() {
 		fmt.Println("没有action，无法运行")
-		atomic.StoreInt32(&this.running, 0)
+		atomic.StoreInt32(&this.running, int32(interf.RunInit))
 		return interf.ErrNoExecutableAction
 	}
 
@@ -106,7 +109,7 @@ end:
 }
 
 func (this *TurnAsync) clean() {
-	atomic.StoreInt32(&this.running, 0)
+	atomic.StoreInt32(&this.running, int32(interf.RunFinish))
 	close(this.signal)
 	this.timer.Stop()
 	this.group = nil

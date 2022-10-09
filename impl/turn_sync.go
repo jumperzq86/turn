@@ -20,20 +20,20 @@ import (
 type TurnSync struct {
 	group   *Group
 	finish  interf.Finish
-	running bool
+	running interf.RunStatus
 }
 
 func NewTurnSync(groupType GroupType, finish interf.Finish) *TurnSync {
 	return &TurnSync{
 		group:   NewGroup(groupType),
 		finish:  finish,
-		running: true,
+		running: interf.RunInit,
 	}
 }
 
 func (this *TurnSync) AddAction(action *Action) error {
-	if this.running {
-		fmt.Println("未运行")
+	if this.running != interf.RunInit {
+		fmt.Println("非未运行状态，不能添加action")
 		return interf.ErrNotAllowedAddActionAfterRun
 	}
 	this.group.addAction(action)
@@ -43,10 +43,13 @@ func (this *TurnSync) AddAction(action *Action) error {
 //note: 每次有玩家做出决策就调用Run(false)，超时时调用Run(true)
 //	可以通过返回值判断是否执行了turn
 func (this *TurnSync) Run(force bool) (bool, error) {
-	if !this.running {
-		fmt.Println("未运行")
-		return false, interf.ErrTurnNotRun
+
+	if this.running == interf.RunFinish {
+		fmt.Println("运行完成状态，不能开启运行，退出")
+		return false, interf.ErrTurnAlreadyFinishRun
 	}
+
+	this.running = interf.Running
 
 	if this.group.empty() {
 		fmt.Println("没有action，退出")
@@ -78,7 +81,7 @@ func (this *TurnSync) Run(force bool) (bool, error) {
 }
 
 func (this *TurnSync) clean() {
-	this.running = false
+	this.running = interf.RunFinish
 	this.group = nil
 	this.finish = nil
 }

@@ -52,7 +52,7 @@ func main() {
 	//checktag2 = false
 	//checktag3 = true
 	//
-	//turnSync.Run(true)
+	//turnSync.Run(false)
 
 	var f FinishS
 	//checktag1 = false
@@ -74,8 +74,6 @@ type ConditionS1 struct {
 }
 
 func (this *ConditionS1) Check(values ...interf.TernaryValue) (interf.TernaryValue, error) {
-	fmt.Println("check1")
-	//return interf.TernaryInit, nil
 	if checktag1 {
 		return interf.TernaryInit, nil
 	} else {
@@ -87,8 +85,6 @@ type ConditionS2 struct {
 }
 
 func (this *ConditionS2) Check(values ...interf.TernaryValue) (interf.TernaryValue, error) {
-	fmt.Println("check2")
-	//return interf.TernaryInit, nil
 	if checktag2 {
 		return interf.TernaryInit, nil
 	} else {
@@ -100,8 +96,6 @@ type ConditionS3 struct {
 }
 
 func (this *ConditionS3) Check(values ...interf.TernaryValue) (interf.TernaryValue, error) {
-	fmt.Println("check3")
-	//return interf.TernaryInit, nil
 	if checktag3 {
 		return interf.TernaryInit, nil
 	} else {
@@ -113,7 +107,6 @@ type CleanerS struct {
 }
 
 func (this *CleanerS) Clean() error {
-	fmt.Println("action clean")
 	return nil
 }
 
